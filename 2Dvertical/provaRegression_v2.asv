@@ -1,0 +1,74 @@
+clc
+clear all
+close all
+noLSs=3;
+IMLs=dlmread('IMLs.tcl');
+pdmCnn = dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\Data\1_1_2bays\1_1_1\friction02\pdm.tcl');
+probCnn = 0.76;
+pdm = dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\Data\1_1_2bays\pdmWO.tcl');
+pdmCnn(:,3) = pdmCnn(:,3)- pdm(:,3);
+pdmCnn(:,2) = pdmCnn(:,2)+ pdm(:,3);
+[ LS1, LS2, LSmean, T1, T2, Tm, fit ] = betterCorrelation_v2( pdm, IMLs);
+T=0.5:0.1:4;
+figure(1)
+plot(T,LS1);
+hold on
+plot(T,LS2,'r');
+plot(T,LSmean,'k');
+plot(T(T1),min(LS2):0.01:1,'--b');
+plot(T(T2),min(LS2):0.01:1,'--r');
+plot(T(Tm),min(LS2):0.01:1,'--k');
+legend('LS1','LS2','mean')
+xlabel('Period [s]');
+ylabel('Correlation')
+
+%% Plots
+pdm(:,4)=IMLs(:,Tm);
+pdmCnn(:,4)=IMLs(:,Tm);
+[DPM] = DamageProbabilityMatrix (pdm, noLSs);
+[DPMCnn] = DamageProbabilityMatrix (pdmCnn, noLSs);
+cumDamageStates = fragility(DPM, noLSs);
+cumDamageStatesCnn = fragility(DPMCnn, noLSs);
+cumDamageStatesCnn(:,4) = DPMCnn(:,4);
+[fitCnn] = CnnStatistics(cumDamageStatesCnn,probCnn);
+iml=1:DPM(length(DPM),4)/length(DPM):DPM(length(DPM),4);
+
+plot1 = plot(DPM(:,4),cumDamageStates(:,2),'LineStyle','none');
+set(plot1,'Marker','*','Color',[0 0 1],'DisplayName','LS1');
+plot2 = plot(iml,logncdf(iml,fit(1,1),fit(1,2)));
+set(plot2,'LineWidth',2,'Color',[0 0 1],'LineStyle','-','DisplayName','PoE yielding');
+xlabel('Sa(Tmean) [cm/s/s]');
+ylabel('Probability of Exceedance');
+legend('show');
+legend boxoff
+
+figure(3)
+hold on
+plot1 = plot(DPM(:,4),cumDamageStates(:,2),'LineStyle','none');
+plot2 = plot(iml,logncdf(iml,fit(1,1),fit(1,2)));
+plot3 = plot(DPM(:,4),cumDamageStates(:,3),'LineStyle','none');
+plot4 = plot(iml,logncdf(iml,fit(2,1),fit(2,2)));
+set(plot1,'Marker','*','Color',[0 0 1],'DisplayName','LS1');
+set(plot2,'LineWidth',2,'Color',[0 0 1],'LineStyle','-','DisplayName','PoE yielding');
+set(plot3,'Marker','+','Color',[1 0 0],'DisplayName','LS2');
+set(plot4,'LineWidth',2,'Color',[0 0 0],'LineStyle','--','DisplayName','PoE flexural collape');
+xlabel('Sa(Tmean) [cm/s/s]');
+ylabel('Probability of Exceedance');
+legend('show');
+box off
+legend boxoff
+
+figure(4)
+hold on
+plot1 = plot(iml,logncdf(iml,fit(1,1),fit(1,2)));
+plot2 = plot(iml,logncdf(iml,fit(2,1),fit(2,2))+logncdf(iml,fitCnn(2,1),fitCnn(2,2))*probCnn);
+set(plot1,'LineWidth',2,'Color',[0 0 1],'LineStyle','-','DisplayName','PoE yielding');
+set(plot2,'LineWidth',2,'Color',[1 0 0],'LineStyle','-','DisplayName','PoE total collape');
+xlabel('Sa(Tmean) [cm/s/s]');
+ylabel('Probability of Exceedance');
+legend('show');
+box off
+legend boxoff
+axis([0 300 0 1]);
+
+dlmwrite('stats.tcl',fit,'delimiter','	');

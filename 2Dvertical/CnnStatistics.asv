@@ -1,0 +1,21 @@
+function [ fitCnn ] = CnnStatistics( cumDamageStates, probCnn)
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+
+cumDamageStates(:,3) = cumDamageStates(:,3)/probCnn;
+
+for i=1:length(cumDamageStates)
+	if cumDamageStates(i,3)>1
+		cumDamageStates(i,3)=1;
+	end
+end
+
+fitCnn = leastSquares(cumDamageStates(:,4), cumDamageStates, 2);
+figure (2)
+hold on
+plot1 = plot(cumDamageStates(:,4),cumDamageStates(:,3)*probCnn,'LineStyle','none');
+set(plot1,'Marker','+','Color',[1 0 0],'DisplayName','LS2');
+plot2 = plot(cumDamageStates(:,4),logncdf(cumDamageStates(:,4),fitCnn(2,1),fitCnn(2,2))*probCnn);
+set(plot2,'LineWidth',2,'Color',[1 0 0],'LineStyle',':','DisplayName','PoE connection collapse');
+end
+

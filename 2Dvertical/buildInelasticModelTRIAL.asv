@@ -1,0 +1,212 @@
+function buildInelasticModelTRIAL(Results,n)
+
+for i=1:n
+    
+    LBeam=Results(i,1);
+    Linter=Results(i,2);
+    LCol=Results(i,3);
+    nb=Results(i,4);
+    PCol=Results(i,5);
+    PColext=Results(i,6);
+    Mass=Results(i,7);
+    Mass2=PColext/9.81;
+    HCol=Results(i,8);
+    BCol=Results(i,9);
+    numBarsCol=Results(i,10);
+    barAreaCol=Results(i,11);
+    Cover=Results(i,12);
+    fy=Results(i,13);
+    fc=Results(i,14);
+    Ec=Results(i,15)*1000;
+    fuc=0.2*fc;
+    ec=0.003;
+    euc=0.05;
+    lambda=0.1;    
+    ftens=-0.14*fc;
+    espst0=ftens/0.002;
+    ABeam=HCol*BCol;
+    IzBeam=HCol^3*BCol/12;
+    
+    file = fopen('buildInelasticModel.tcl', 'w+');
+    fprintf(file,'model basic -ndm 2 -ndf 3 \n');
+    fprintf(file,'source DisplayModel2D.tcl;\n');
+    fprintf(file,'source DisplayPlane.tcl;\n');
+        
+    if nb==1
+       fprintf(file,'node 1 0 0 \n');
+       fprintf(file,'node 2 %2.1f 0 \n',LBeam);
+       fprintf(file,'node 11 0 %2.1f -mass %2.1f 1e-9 1e-9 \n',LCol,Mass);
+       fprintf(file,'node 12 %2.1f %2.1f -mass %2.1f 1e-9 1e-9 \n',LBeam,LCol,Mass);
+       fprintf(file,'\n');
+       fprintf(file,'# Fix Nodes \n');
+       fprintf(file,'# Fix supports at base of columns\n');
+       fprintf(file,'#    tag   DX   DY   RZ \n');
+       fprintf(file,'fix   1     1    1    1 \n');
+       fprintf(file,'fix   2     1    1    1 \n');
+       fprintf(file,'\n');
+       
+    elseif nb==2
+       fprintf(file,'node 1 0 0 \n');
+       fprintf(file,'node 2 %2.1f 0 \n',LBeam);
+       fprintf(file,'node 3 %2.1f 0 \n',LBeam*2);
+       fprintf(file,'node 11 0 %2.1f -mass %2.1f 1e-9 1e-9 \n',LCol,Mass2);
+       fprintf(file,'node 12 %2.1f %2.1f -mass %2.1f 1e-9 1e-9 \n',LBeam,LCol,Mass);
+       fprintf(file,'node 13 %2.1f %2.1f -mass %2.1f 1e-9 1e-9 \n',LBeam*2,LCol,Mass2);
+       fprintf(file,'\n');
+       fprintf(file,'# Fix Nodes \n');
+       fprintf(file,'# Fix supports at base of columns\n');
+       fprintf(file,'#    tag   DX   DY   RZ \n');
+       fprintf(file,'fix   1     1    1    1 \n');
+       fprintf(file,'fix   2     1    1    1 \n');
+       fprintf(file,'fix   3     1    1    1 \n');
+       fprintf(file,'\n');
+    else
+       fprintf(file,'node 1 0 0 \n');
+       fprintf(file,'node 2 %2.1f 0 \n',LBeam);
+       fprintf(file,'node 3 %2.1f 0 \n',LBeam*2);
+       fprintf(file,'node 4 %2.1f 0 \n',LBeam*3);
+       fprintf(file,'node 11 0 %2.1f -mass %2.1f 1e-9 1e-9 \n',LCol,Mass2);
+       fprintf(file,'node 12 %2.1f %2.1f -mass %2.1f 1e-9 1e-9 \n',LBeam,LCol,Mass);
+       fprintf(file,'node 13 %2.1f %2.1f -mass %2.1f 1e-9 1e-9 \n',LBeam*2,LCol,Mass);
+       fprintf(file,'node 14 %2.1f %2.1f -mass %2.1f 1e-9 1e-9 \n',LBeam*3,LCol,Mass2);
+       fprintf(file,'\n');
+       fprintf(file,'# Fix Nodes \n');
+       fprintf(file,'# Fix supports at base of columns\n');
+       fprintf(file,'#    tag   DX   DY   RZ \n');
+       fprintf(file,'fix   1     1    1    1 \n');
+       fprintf(file,'fix   2     1    1    1 \n');
+       fprintf(file,'fix   3     1    1    1 \n');
+       fprintf(file,'fix   4     1    1    1 \n');
+       fprintf(file,'\n');
+    end
+
+    fprintf(file,'#DEFINE THE ELEMENTS and SECTIONS \n');
+    fprintf(file,'set ColSecTag 1  \n'); 
+    fprintf(file,'set BeamSecTag 2 \n'); 
+    fprintf(file,'\n'); 
+    
+    fprintf(file,'#DEFINE SECTION GEOMETRY \n');    
+    fprintf(file,'set coverCol %2.2f; # assign a tag number to the column section \n',Cover);
+    fprintf(file,'set numBarsCol %2.0f; # number of longitudinal-reinforcement bars in each side of column section. (symmetric top & bot)\n',numBarsCol);
+    fprintf(file,'set barAreaCol %2.6f; # area of longitudinal-reinforcement bars \n',barAreaCol);
+
+    fprintf(file,'# Define material properties \n');
+    fprintf(file,'# CONCRETE \n');
+    fprintf(file,'# Unconfined concrete \n');
+    fprintf(file,'uniaxialMaterial Concrete02  1    %6.2f %2.6f  %6.2f  %2.6f %2.6f %2.6f %2.6f \n',-fc*1000,-ec,-fuc*1000,-euc,lambda,ftens*1000,espst0);
+    fprintf(file,'# Reinforcing steel \n');
+    fprintf(file,'uniaxialMaterial Steel02 2 %6.2f 200000000.00 0.00 20 0.95 0.15 \n',fy*1000);  
+    fprintf(file,'set IDconcU 1; # material ID tag -- unconfined cover concrete \n');
+    fprintf(file,'set IDreinf 2; # material ID tag -- reinforcement \n');
+    fprintf(file,'\n');
+    
+    fprintf(file,'# RC section \n');
+    fprintf(file,'set coverY %2.2f \n',BCol/2.0);
+    fprintf(file,'set coverZ %2.2f \n',HCol/2.0);
+    fprintf(file,'set coreY [expr $coverY-$coverCol] \n');
+    fprintf(file,'set coreZ [expr $coverZ-$coverCol] \n');
+    fprintf(file,'set nfY 13 \n'); %capire come mettere queste nfy e nfz
+    fprintf(file,'set nfZ 13 \n');
+    fprintf(file,'section Fiber $ColSecTag {\n');%controlla le fibre e sistema di riferimento
+    fprintf(file,'patch quadr $IDconcU $nfZ $nfY -$coverY $coverZ -$coverY -$coverZ $coverY -$coverZ $coverY $coverZ \n');
+    fprintf(file,'layer straight $IDreinf $numBarsCol $barAreaCol -$coreY $coreZ -$coreY -$coreZ \n');
+    fprintf(file,'layer straight $IDreinf $numBarsCol $barAreaCol  $coreY $coreZ  $coreY -$coreZ \n');
+    fprintf(file,'layer straight $IDreinf $numBarsCol $barAreaCol -$coreY $coreZ -$coreY -$coreZ \n');
+    fprintf(file,'layer straight $IDreinf $numBarsCol $barAreaCol  $coreY $coreZ  $coreY -$coreZ \n');    
+    
+    fprintf(file,'}  \n');   
+    fprintf(file,'\n');
+    fprintf(file,'# BEAM section: \n');
+    fprintf(file,'section Elastic $BeamSecTag   %2.0f %2.6f %2.6f;	# elastic beam section \n',Ec, ABeam,IzBeam);
+    fprintf(file,'\n');
+    fprintf(file,'geomTransf Linear 1\n');
+    fprintf(file,'# element connectivity:\n');
+    fprintf(file,'set numIntgrPts 5;\n');
+    
+    if nb==1
+       fprintf(file,'element nonlinearBeamColumn 1 1 11 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 2 2 12 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 3 11 12 $numIntgrPts $BeamSecTag 1;\n');
+       
+       fprintf(file,'# Define RECORDERS \n');
+       fprintf(file,'recorder Node -file Node11.out -node 11 -dof 1 2 3 disp; \n');
+       fprintf(file,'recorder Element -file FCol.out -ele 1 2 globalForce; \n');       
+       fprintf(file,'\n');
+       
+       fprintf(file,'# define GRAVITY \n');
+       fprintf(file,'pattern Plain 1 Linear { \n');
+       fprintf(file,'load 11 0. %2.2f 0. \n',-PCol);
+       fprintf(file,'load 12 0. %2.2f 0. \n',-PCol);
+       fprintf(file,'} \n');
+              
+    elseif nb==2
+       fprintf(file,'element nonlinearBeamColumn 1 1 11 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 2 2 12 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 3 3 13 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 4 11 12 $numIntgrPts $BeamSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 5 12 13 $numIntgrPts $BeamSecTag 1;\n');
+       
+       fprintf(file,'# Define RECORDERS \n');
+       fprintf(file,'recorder Node -file Node11.out -node 11 -dof 1 2 3 disp; \n');
+       fprintf(file,'recorder Element -file FCol.out -ele 1 2 4 globalForce; \n');
+       fprintf(file,'\n');
+       
+       fprintf(file,'# define GRAVITY \n');
+       fprintf(file,'pattern Plain 1 Linear { \n');
+       fprintf(file,'load 11 0. %2.2f 0. \n',-PColext);
+       fprintf(file,'load 12 0. %2.2f 0. \n',-PCol);
+       fprintf(file,'load 13 0. %2.2f 0. \n',-PColext);
+       fprintf(file,'} \n');
+      
+    else
+       fprintf(file,'element nonlinearBeamColumn 1 1 11 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 2 2 12 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 3 3 13 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 4 4 14 $numIntgrPts $ColSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 5 11 12 $numIntgrPts $BeamSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 6 12 13 $numIntgrPts $BeamSecTag 1;\n');
+       fprintf(file,'element nonlinearBeamColumn 7 13 14 $numIntgrPts $BeamSecTag 1;\n');
+       fprintf(file,'\n');
+       
+       fprintf(file,'# Define RECORDERS \n');
+       fprintf(file,'recorder Node -file Node11.out -node 11 -dof 1 2 3 disp \n');
+       fprintf(file,'recorder Element -file FCol.out -ele 1 2 4 globalForce \n');
+       fprintf(file,'\n');
+       
+       fprintf(file,'# define GRAVITY \n');
+       fprintf(file,'pattern Plain 1 Linear { \n');
+       fprintf(file,'load 11 0. %2.2f 0. \n',-PColext);
+       fprintf(file,'load 12 0. %2.2f 0. \n',-PCol);
+       fprintf(file,'load 13 0. %2.2f 0. \n',-PCol);
+       fprintf(file,'load 14 0. %2.2f 0. \n',-PColext);
+       fprintf(file,'} \n');
+    end
+    
+    fprintf(file,' \n');
+    fprintf(file,'# display deformed shape:\n');
+    fprintf(file,'set ViewScale 5;\n');
+    fprintf(file,'DisplayModel2D DeformedShape $ViewScale ;\n');
+    fprintf(file,'# GRAVITY ANALYSIS \n');
+    fprintf(file,'constraints Plain \n');
+    fprintf(file,'numberer RCM \n');
+    fprintf(file,'system BandGeneral \n');
+    fprintf(file,'test NormDispIncr 1.0e-5  10 3\n');
+    fprintf(file,'algorithm Newton\n');
+    fprintf(file,'integrator LoadControl 0.1\n');
+    fprintf(file,'analysis Static\n');
+    fprintf(file,'analyze 10 \n');
+     
+    fprintf(file,'\n');
+    fprintf(file,'# eigenvalues analysis \n');
+    fprintf(file,'set pi [expr 2.0*asin(1.0)];\n');   
+    fprintf(file,'set lambda [eigen  3];\n');
+    fprintf(file,'set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)] [expr 2.0*$pi/pow([lindex $lambda 2],0.5)]]\n');  
+    fprintf(file,'     set outfile [open "period.txt" w]\n');
+    fprintf(file,'     puts $outfile $T \n');
+    fprintf(file,'puts "T = $T s"\n');
+
+    fclose(file); 
+
+    eval(['!/Users\chiaretta\Documents\PHD\THESIS\Precast\buildingmodel\S6\OpenSees.exe',' ','buildInelasticModel.tcl'])
+end
+ end

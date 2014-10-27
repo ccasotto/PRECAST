@@ -1,0 +1,33 @@
+function [record]=parseAccelerogramIC(recordName,saveFlag)
+a = pwd;
+step= 0.01;
+data = importdata(strcat(a,'\EuropeanData\cor\',recordName),' ',1000);
+values = data(32:length(data));
+m = textscan(data{18},'%s%s%s%d');
+last = m{4};
+
+    counter=1;    
+    record = zeros(1,2);
+	i = 1;
+	while counter < last
+		lineValues = textscan(values{i,:},'%f');
+        for j = 1:length(lineValues{1,1})
+            record(counter,2)=lineValues{1,1}(j);
+            record(counter,1)=counter*step;
+            counter = counter+1;
+		end
+		i = i+1;
+    end
+  
+    if saveFlag == 2
+        duration = step*length(record);
+        t=0:0.01:duration;
+        accs = interp1(record(:,1),record(:,2),t,'linear','extrap');
+        limit = 0.05*max(abs(accs));
+        first_t = find(abs(accs)>limit,1,'first');
+        last_t = find(abs(accs)>limit,1,'last');
+        filtered_accs = accs(first_t:last_t);
+        %dlmwrite('gmr.tcl',filtered_accs','delimiter','	');
+    end
+    
+end

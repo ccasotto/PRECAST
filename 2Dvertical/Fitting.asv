@@ -1,0 +1,17 @@
+function [ theta,beta ] = Fitting( IM, num_gms, num_data ,meth )
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+	%num data is the number of buildings for each damage state, 1=yielding,
+	%2= collapse
+	meth = strcat(meth);
+	theta = zeros(1,2);
+	beta = zeros(1,2);
+	if meth = 'mle';
+		for i = 1:2;
+		[theta(i), beta(i)] = fn_mle_pc(IM, num_gms, num_data(i));
+	else
+		[theta, beta] = fn_sse_pc(IM, num_gms, num_collapse);
+	end
+
+end
+

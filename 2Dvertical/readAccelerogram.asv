@@ -1,0 +1,56 @@
+function [record]=readAccelerogram(recordName,saveFlag)
+
+record = dlmread('/Users\chiaretta\Documents\PHD\THESIS\accelerogram/',recordName),' ',4);
+metadata=data.textdata;
+step= textscan(metadata{4},'%s','delimiter','    ','multipleDelimsAsOne',1);
+step=str2double(step{1}(2));
+
+values = data.data;
+    counter=1;    
+    record=zeros(1,2);
+    for i=1:length(values)
+        lineValues = values(i,:); %all the columns for row 1-length
+        for j=1:length(lineValues)
+            if isnan(lineValues(j))
+               break 
+            end
+            record(counter,2)=lineValues(j);
+            record(counter,1)=counter*step;    
+            counter=counter+1;
+        end
+    end
+    
+%     [Sd,Sa] = Spectrum(5/100,record,0.1,3); 
+%     figure(1)
+%     plot(linspace(0.1,3,length(Sd)),Sa)
+%     figure(2)
+%     plot(record(:,1),record(:,2));
+  
+    if saveFlag == 2
+        duration = step*length(record);
+        t=0:0.01:duration;
+        accs = interp1(record(:,1),record(:,2),t,'linear','extrap');
+        limit = 0.05*max(abs(accs));
+        first_t = find(abs(accs)>limit,1,'first');
+        last_t = find(abs(accs)>limit,1,'last');
+        filtered_accs = accs(first_t:last_t);
+        dlmwrite('gmr.tcl',filtered_accs','delimiter','	');
+	end
+
+%     
+%     record2=zeros(1,2);
+%         counter=1;    
+%         step=0.01;
+%     for i=1:length(filtered_accs)
+%             record2(counter,2)=filtered_accs(i);
+%             record2(counter,1)=counter*step;    
+%             counter=counter+1;
+%     end
+%     
+%     [Sd,Sa] = Spectrum(5/100,record2,0.1,3);
+%     figure(3)
+%     plot(linspace(0.1,3,length(Sd)),Sa)
+%     figure(4)
+%     plot(record2(:,1),record2(:,2));
+    
+end

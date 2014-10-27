@@ -1,0 +1,105 @@
+%% Chiara Casotto
+%  Phd Student, IUSS Pavia
+%  Deriving fragility curves for industrial warehouses
+clear all
+clc
+close all
+%% Definition of the models
+portfolio = [2 70 6];                                                      %the 1st value is the typology; the 2nd the number of buildings we want to produce, the 3rd the seismic coefficient
+preCode = 2;                                                               %1 is precode and 2 is PostCode
+cnn = 1;                                                                   %1 stands for corbel connection, 2 for "fork" connection
+noTypologies = size(portfolio,1);
+a = pwd;
+accelerograms = dir(horzcat(a,'\accelerograms2475'));
+AB10 = horzcat(a,'\EU10_UnifiedDatabase_AB10\AB10Database_10.Aug.2010_rivisited.xlsx');
+[filelist,t,M,d] = ParseAB10(AB10);
+firstRecord = 1;
+lastRecord = length(filelist);
+firstStrong = 1;
+lastStrong = 7;
+noLSs = 3;                                                                 %number of limit states
+pdm = zeros(lastRecord+lastStrong,noLSs+1);
+PGA = [];
+%% Analyses
+for typology = 1:noTypologies
+    noAsset = 1;
+    while noAsset <= portfolio(typology,2)
+        asset = sampleGeometry(portfolio(typology,1),preCode,portfolio(typology,3));
+        action = computeActions(asset);
+        asset = designAsset(asset,action);
+        buildInelasticModel(asset,action);
+        performPO(asset);
+		PlotStressStrain;
+		pause(1)
+		close all;
+		connection = ConnectionLimitState(asset ,action);
+		definelimitstates;
+		PlotPushover(asset,limit);
+        for rec = firstRecord:lastRecord
+			filename = strcat(a,'\EU10_UnifiedDatabase_AB10\AB10_ProcessedRecords_X&YComponents\',filelist{1,rec});
+			saveFlag = 2;
+			[record] = AB10recordreader2(filename,t(rec),saveFlag);        %in cm/s/s
+				if saveFlag == 2;
+				dt = 0.01;
+				else dt = t(rec);
+				end
+			 maxSteps = round(length(record));
+			 units = 'cm/s/s';
+             dynamic;
+ 			 Disp = dlmread('nodeDisp_dynamic.txt')/(asset.ColH_upper*(asset.noStoreys-1)+asset.ColH_ground);
+			 %T = dlmread('period.txt');
+			 %T1 = T(1);
+			 findPeriods;
+			 T1 = Ts(find(Disp == limit.LS1));
+			 DS = assignDamage(limit, Disp);
+			 response = Spectrum_v2(record, 0.05, units, T1);
+			 PGA = [PGA; max(abs(record(:,2)))];
+			 pdm(rec,noLSs+1) = response.Sa;
+			 pdm(rec,DS) = pdm(rec,DS)+1;
+		end
+		for k = 1:lastStrong
+			 [record] = dlmread(horzcat(a,'\accelerograms2475\',accelerograms(2+k,1).name)); %in m/s/s
+			 maxSteps = round(length(record));
+			 pause(0.5)
+			 dt = 0.01;
+			 units = 'm/s/s';
+             dynamic;
+			 Disp = dlmread('nodeDisp_dynamic.txt')/(asset.ColH_upper*(asset.noStoreys-1)+asset.ColH_ground);
+			 %T = dlmread('period.txt');
+			 %T1 = T(1);
+			 findPeriods;
+			 T1 = Ts(find(Disp == limit.LS1));
+			
+			 [ DS ] = assignDamage(limit, Disp);
+			 T = Periods(Tds);
+			 response = Spectrum_v2(record, 0.05, units, T1);
+			 PGA = [PGA; max(abs(record(:,2)))];
+			 pdm(rec+k,noLSs+1) = response.Sa;
+			 pdm(rec+k,DS) = pdm(rec+k,DS)+1;
+		end
+		noAsset = noAsset+1;
+    end
+end
+
+%% PostProcessing the results for fragility curves
+[DPM] = DamageProbabilityMatrix (pdm, noLSs);
+dlmwrite('DPM.tcl',DPM,'delimiter','	');
+dlmwrite('pdm.tcl',pdm,'delimiter','	');
+cumDamageStates = fragility(DPM, noLSs);
+%aggiungere cracked period
+IMLs = [DPM(:,noLSs+1)];                                                   %IMLs in cm/s/s
+dlmwrite('IMLs.tcl',IMLs,'delimiter','	');
+type = 1;
+figure(2)
+plot(IMLs(:,type), cumDamageStates(:,2),'bd');
+grid on
+hold on
+plot(IMLs(:,type), cumDamageStates(:,3),'rd');
+hold on
+stats = leastSquares(IMLs,cumDamageStates,type);
+%stats = leastSquaresCloRes(IMLs, cumDamageStates, type);
+plot(IMLs(:,type),logncdf(IMLs(:,type),stats(1,1),stats(1,2)),'b')
+hold on
+plot(IMLs(:,type),logncdf(IMLs(:,type),stats(2,1),stats(2,2)),'r')
+legend('LS1','','fork LS1','fork LS2','corbel LS2');
+dlmwrite('stats.tcl',stats,'delimiter','	');

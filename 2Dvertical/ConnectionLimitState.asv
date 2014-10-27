@@ -1,0 +1,112 @@
+function connection = ConnectionLimitState( asset , action)
+%ConnectionLimitState The function defines the base shear that causes a
+%failure of the connections
+
+%Case 1: Bolted beam-column connection
+    Ab=action.colShear*1000/2/(0.5*asset.fubk/asset.gmm);                                            %area of the bolts in mm^2
+    Ab20=245;
+    Ab22=303;
+    Ab24=353;
+    if Ab<Ab20;
+        Ab=Ab20;                                                           %area and diameter of the bolts
+        dnom=20;
+    elseif Ab<Ab22;
+        Ab=Ab22;
+        dnom=22;
+    else Ab<Ab24;
+        Ab=Ab24;
+        dnom=24;
+    end
+    bcorb = asset.ColD;                                                               %width of the corbel
+    hcorb = asset.lCorbel +0.1;
+    heff=0.12;                                                             %anchorage length
+    c1=asset.lCorbel/2-0.5;                                                        %distance to the border of the corbel in x direction
+    c2=(bcorb-asset.BeamD)/2+(asset.BeamD/3);                                              %distance to the border of the corbel in y direction
+    if c2>1.5*c1;
+        c2=1.5*c1;
+        Acv=(4.5*(c1*1000)^2)/1000;
+    else c2=c2;
+        Acv=1.5*(c1*1000)*(1.5*c1*1000+c2*1000)/1000;
+    end
+    %failure of the steel
+    Vrks=(Ab*2*0.5*asset.fubk)/1000+action.colLoadExt*asset.a*asset.lCorbel*bcorb;                             %resistance due to the bolts and friction
+    %Failure for pryout of the concrete
+    Nrkc0=(7.2*sqrt(asset.Rck)*(heff*1000)^1.5)/1000;
+    Nrkc=2*Nrkc0;
+    %Failure of the boundary of the corbel
+    pv=0.7+0.3*(c2/(1.5*c1));
+    phv=(1.5*c1*1000/(hcorb)^(1/3));
+    if phv>=1;
+        phv=phv;
+    else phv=1;
+    end
+    pav=1;
+    pecv=1;
+    pucrv=1.2;
+    Vrkc0=(0.45*sqrt(dnom)*(heff*1000/dnom)^0.2*sqrt(asset.Rck*c1^1.5))/1000;
+    A0cv=(4.5*(c1*1000)^2)/1000;
+    Vrkc=Vrkc0*Acv/A0cv*pav*pecv*pucrv+action.colLoad*asset.a*asset.lCorbel*bcorb;
+    
+   	%friction restistance
+	VrdFr = action.colLoadExt*asset.a*asset.lCorbel*bcorb;
+	if asset.Code == 1
+		if VrdFr > 40
+		connection.Vb1 = VrdFr;
+		connection.LS1 = asset.lCorbel/2;
+		else Vrk=[Vrks-action.colLoadExt*asset.a*asset.lCorbel*bcorb Nrkc Vrkc];
+			connection.Vb1 = (min(Vrk))/asset.gmm;
+		connection.LS1 = inf;
+		end
+	else connection.Vb1 = (min(Vrk))/asset.gmm;
+		connection.LS1 = inf;
+	end
+    %clear Ab20 Ab22 Ab24 Acv A0cv Vrkc0 Nrkc0 c1 c2 heff bcorb hcorb lcorb pv phv pav pecv pucrv;
+    
+%% Case 2:"Forcella"(Fork)
+    %properties of the connections
+    SpF=(asset.ColD-asset.BeamD)/2;                                                         %length of the flanges
+    if SpF<0.25;
+        SpF=SpF;
+    else Spf=0.25;
+    end
+    heff=SpF;                                                              %length of the anchorage
+    Lf = asset.ColW;                                                                  %length of the fork
+    c1 = asset.ColW/2-0.05;                                                           %distance from the border
+    c2 = asset.Hfork/2-0.1;
+    if c2>1.5*c1;
+        c2=1.5*c1;
+        Acv=(4.5*(c1*1000)^2)/1000;
+    else c2=c2;
+        Acv=1.5*(c1*1000)*(1.5*c1*1000+c2*1000)/1000;
+    end
+    hcorb=heff;
+    %failure of the steel
+    Vrksf=(Ab*2*0.5*asset.fubk)/1000+action.colLoadExt*asset.a*Lf*(asset.ColD-2*SpF);
+    %failure of the boundary of the fork
+    pv=0.7+0.3*(c2/(1.5*c1));
+    phv=(1.5*c1*1000/(hcorb)^(1/3));
+    if phv>=1;
+        phv=phv;
+    else phv=1;
+    end
+    pav=1;
+    pecv=1;
+    pucrv=1.2;
+    A0cv=(4.5*(c1*1000)^2)/1000;
+    Vrkc0=(0.45*sqrt(dnom)*(heff*1000/dnom)^0.2*sqrt(asset.Rck*c1^1.5))/1000;
+    Vrkcf=Vrkc0*Acv/A0cv*pav*pecv*pucrv+action.colLoad*asset.a*Lf*(asset.ColD-2*SpF);
+   	%friction restistance
+	VrdFr = action.colLoadExt*asset.a*Lf*(asset.ColD-2*SpF);
+	if asset.Code == 1
+		if VrdFr > 60
+		connection.Vb2 = VrdFr;
+		connection.LS2 = asset.ColW/2;
+		else connection.Vb2 = min(Vrksf,Vrkcf)/asset.gmm;
+		connection.LS2 = inf;
+		end
+	else connection.Vb2 = min(Vrksf,Vrkcf)/asset.gmm;
+		connection.LS2 = inf;
+	end
+% 	connection.Vb = min(connection.Vb1,connection.Vb2);
+end
+

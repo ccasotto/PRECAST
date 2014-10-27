@@ -1,0 +1,30 @@
+function [ DPM ,wndw,m] = DamageProbabilityMatrix( pdm, noLSs )
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+	As = pdm(:,noLSs+1);
+	Bs = pdm(:,1:noLSs);
+% 	Stp = 20;
+% 	noStp = 35;
+% 	wndw =zeros(1,noStp+1);
+% 	for i = 1 : length(wndw)
+% 		wndw(1,i+1) = i*Stp;
+% 	end
+% 	m = Stp/2;
+% 
+% 	DPM = zeros(length(wndw),noLSs+1);
+% 	for i = 1:length(pdm)
+% 	j = 1;
+% 		if pdm(i,noLSs+1) < (wndw(length(wndw)))
+% 			while pdm(i,noLSs+1) >= (wndw(j)) 
+% 			DPM(j,:) = DPM(j,:);
+% 			j=j+1;
+% 			end
+% 		DPM(j,:) = DPM(j,:)+ pdm(i,:);
+% 		end
+% 	end
+% 	DPM(:,noLSs+1) = wndw;
+% 	for i = 1 : length(wndw)
+% 		DPM(i,1:noLSs) = DPM(i,1:noLSs)/sum(DPM(i,1:noLSs));
+% 	end
+end
+

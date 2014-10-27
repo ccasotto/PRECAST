@@ -1,0 +1,124 @@
+
+%% Chiara Casotto
+%  Phd Student, IUSS Pavia
+%  Deriving fragility curves for industrial warehouses
+clear all
+clc
+close all
+%% Definition of the models
+portfolio = [2 100 12];                                                      %the 1st value is the typology; the 2nd the number of buildings we want to produce, the 3rd the seismic coefficient
+preCode = 2;                                                               %1 is precode and 2 is PostCode
+cnn = 1;
+c = 0.3;                                                                   %1 stands for corbel connection, 2 for "fork" connection
+noTypologies = size(portfolio,1);
+noLSs = 3;                                                                 %number of limit states
+a = pwd;
+
+%% Seismic input
+NGA = dir(horzcat(a,'\NGArecords\new'));                                       %NGA Peer database
+AB10 = horzcat(a,'\EU10_UnifiedDatabase_AB10\AB10Database_10.Aug.2010_rivisited_v3.xlsx');
+ESMD = dir(horzcat(a,'\EuropeanData\IC'));                                 %European Strong Motion Database
+[filelist,t,M,d] = ParseAB10(AB10);                                        %ESMD Akkar and Bommer rivisited
+lastAB10 = length(filelist);
+lastNGA = 23;
+lastESMD = 19;
+DSpt = zeros(portfolio(1,2),4); %damage point for each accelerogram
+pdm = zeros(lastAB10+lastNGA+lastESMD+6,noLSs+1);
+pdmWO = zeros(lastAB10+lastNGA+lastESMD+6,noLSs+1);
+IMLs = zeros(lastAB10+lastNGA+lastESMD+6,4);
+limit.results = 0;
+limit.cnn=[];
+%% Analyses
+for typology = 1:noTypologies
+	T1 = 2;
+    noAsset = 1;
+    while noAsset <= portfolio(typology,2)
+        asset = sampleGeometry(portfolio(typology,1),preCode,portfolio(typology,3),c);
+        action = computeActions(asset);
+        asset = designAsset(asset,action);
+        buildInelasticModel(asset,action);
+        performPO(asset);
+			DispPo = dlmread('nodeDisp_po.txt')/(asset.ColH_upper*(asset.noStoreys-1)+asset.ColH_ground);
+			Reactions = dlmread('nodeReaction_po.txt');
+			VbPo = -sum(Reactions');
+		connection = ConnectionLimitState_v2(asset ,action);
+		definelimitstates;
+%   		PlotPushover;
+% 		xlabel('Top Drift [%]')
+% 		ylabel('Base Shear [kN]')
+%         for rec = 1:lastAB10
+% 			[noAsset rec]
+% 			filename = strcat(a,'\EU10_UnifiedDatabase_AB10\AB10_ProcessedRecords_X&YComponents\',filelist{1,rec});
+% 			saveFlag = 2;
+% 			[record] = AB10recordreader2(filename,t(rec),saveFlag);        %in cm/s/s
+% 			if saveFlag == 2;
+% 				dt = 0.01;
+% 			else dt = t(rec);
+% 			end
+% 			 maxSteps = round(length(record));
+% 			 units = 'cm/s/s';
+%              dynamic;
+%   			 Disp = dlmread('nodeDisp_dynamic.txt')/(asset.ColH_upper*(asset.noStoreys-1)+asset.ColH_ground);%in m
+% 			 Vb = dlmread('nodeReaction_dynamic.txt');
+% 			 assignDamage;
+% 			 assignDamageWoConnection;
+% 			 if noAsset == 1
+% 				record(:,2) = record(:,2)/981;
+% 				response = Spectrum_v2(record, 0.05, 'g', T1);
+% 				IMLs(rec,1:4) = [max(abs(record(:,2))) response.Sa response.Sd response.Sv];
+% 			 end
+% 			 pdm(rec,DS) = pdm(rec,DS)+1;
+% 			 pdmWO(rec,WO) = pdmWO(rec,WO)+1;
+% 		end
+% 
+% 		for j = 1:lastNGA
+% 			[noAsset j]
+% 			[record] = parseAccelerogram(NGA(2+j,1).name,2);
+% 			 maxSteps = round(length(record));
+% 			 dt = 0.01;
+% 			 units = 'g';
+%              dynamic;
+% 			 Disp = dlmread('nodeDisp_dynamic.txt')/(asset.ColH_upper*(asset.noStoreys-1)+asset.ColH_ground);
+% 			 Vb = dlmread('nodeReaction_dynamic.txt');
+% 			 assignDamage;
+% 			 assignDamageWoConnection;
+% 			 if noAsset == 1
+% 				response = Spectrum_v2(record, 0.05, units, T1);
+% 				IMLs(rec+j,1:4) = [max(abs(record(:,2))) response.Sa response.Sd response.Sv];
+% 			 end
+% 			 pdm(rec+j,DS) = pdm(rec+j,DS)+1;
+% 			 pdmWO(rec+j,WO) = pdmWO(rec+j,WO)+1;
+% 		end
+% 	
+% 		for h = 1:lastESMD
+% 			[noAsset h]
+% 			[record] = parseAccelerogramIC2(ESMD(2+h,1).name,2);
+% 			maxSteps = round(length(record));
+% 			dt = 0.01;
+% 			units = 'm/s/s';
+% 			dynamic;
+% 			Disp = dlmread('nodeDisp_dynamic.txt')/(asset.ColH_upper*(asset.noStoreys-1)+asset.ColH_ground);
+% 			Vb = dlmread('nodeReaction_dynamic.txt');
+% 			assignDamage;
+% 			assignDamageWoConnection;
+% 			if noAsset == 1
+% 				response = Spectrum_v2(record, 0.05, units, T1);
+% 				IMLs(rec+j+h,1:4) = [max(abs(record(:,2)))/9.81 response.Sa response.Sd response.Sv];
+% 			end
+% 			pdm(rec+j+h,DS) = pdm(rec+j+h,DS)+1;
+% 			pdmWO(rec+j+h,WO) = pdmWO(rec+j+h,WO)+1;
+%  		end
+% 		Scaled;
+		noAsset = noAsset+1;
+    end
+end
+
+% PostProcessing the results for fragility curves
+IM = IMLs(); %units in g
+num_collapse =  ;      
+num_gms =   
+
+dlmwrite('pdm.tcl',pdm,'delimiter','	');
+dlmwrite('pdmWO.tcl',pdmWO,'delimiter','	');
+dlmwrite('DSpt.tcl',DSpt,'delimiter','	');
+

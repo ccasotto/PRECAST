@@ -1,0 +1,32 @@
+clc
+clear all
+close all
+DispMin=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\DispMin.txt');
+DispMean=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\DispMean.txt');
+DispMax=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\DispMax.txt');
+RMin=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\ReactionMin.txt');
+RMean=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\ReactionMean.txt');
+RMax=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\ReactionMax.txt');
+
+DispMin=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\DispMin.txt');
+DispMean=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\DispMean.txt');
+DispMax=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\DispMax.txt');
+RMin=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\ReactionMin.txt');
+RMean=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\ReactionMean.txt');
+RMax=dlmread('C:\Users\chiaretta\Documents\PHD\THESIS\buildingmodel\results\NewAccelerograms\1_1_6_2bays\ReactionMax.txt');
+
+DriftMin=DispMin./12;
+DriftMean=DispMean./7.5;
+DriftMax=DispMax/5;
+VbMin=-sum(RMin');
+VbMean=-sum(RMean');
+VbMax=-sum(RMax');
+plot(DriftMin,VbMin,'green','Linewidth',2);
+hold on
+plot(DriftMean,VbMean,'k','Linewidth',2);
+plot(DriftMax,VbMax,'r','Linewidth',2);
+
+
+
+
+
