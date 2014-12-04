@@ -1,29 +1,37 @@
 model basic -ndm 2 -ndf 3 
-source DisplayModel2D.tcl;
-source DisplayPlane.tcl;
 set cover 0.030 
 # nodal coordinates:
 node 11 0.00 0.00 
-node 21 13.55 0.00 
-node 31 27.10 0.00 
-node 12 0.00 6.19 
-node 22 13.55 6.19 
-node 32 27.10 6.19 
-node 112 0.00 6.19 
-equalDOF  12 112 1 2; 
-node 122 13.55 6.19 
-equalDOF  22 122 1 2; 
-node 132 27.10 6.19 
-equalDOF  32 132 1 2; 
+node 21 8.69 0.00 
+node 31 17.38 0.00 
+node 41 26.07 0.00 
+node 51 34.76 0.00 
+node 12 0.00 5.90 
+node 22 8.69 5.90 
+node 32 17.38 5.90 
+node 42 26.07 5.90 
+node 52 34.76 5.90 
+node 112 0.00 5.90 
+node 122 8.69 5.90 
+node 222 8.69 5.90 
+node 132 17.38 5.90 
+node 232 17.38 5.90 
+node 142 26.07 5.90 
+node 242 26.07 5.90 
+node 152 34.76 5.90 
 #masses 
-mass 12 15.922 1e-9 1e-9 
-mass 22 31.844 1e-9 1e-9 
-mass 32 15.922 1e-9 1e-9 
+mass 12 20.095 20.095 1e-9 
+mass 22 40.190 40.190 1e-9 
+mass 32 40.190 40.190 1e-9 
+mass 42 40.190 40.190 1e-9 
+mass 52 20.095 20.095 1e-9 
 
 # Fix Nodes 
 fix 11 1 1 1 
 fix 21 1 1 1 
 fix 31 1 1 1 
+fix 41 1 1 1 
+fix 51 1 1 1 
 
 #DEFINE THE ELEMENTS 
 set BeamTransfTag 1 
@@ -33,18 +41,30 @@ geomTransf PDelta $ColTransfTag
 set numBarsCol 2 
 set barAreaCol [expr 0.000804/$numBarsCol] 
 
-# Define material properties 
-set IDconcCore 1; 
-set IDconcU 3; 
-set IDSteel 2; 
+# Define MATERIALS -------------------------------------------------------------
+set IDconcCore  1;
+set IDSteel  2;
+# CONCRETE UNCONFINED 
+set fc  -49005;
+set eps -0.002500;	
+set fc2 -14702;	
+set eps2 -0.010000;
+set Ec 38236762;
+set Ubig 1.e10; 
+set Usmall [expr 1/$Ubig]; 
+set lambda 0.005000;
+set ftC    0.0;
+set Ets    0.0;
+ 
 # CONCRETE 
-# Core concrete (confined) 
-uniaxialMaterial Concrete02  $IDconcCore -57756.49 -0.002500  -17.33  -0.005000 0.500000 0.000000 0.000000; 
-# Core concrete (unconfined) 
-uniaxialMaterial Concrete02  $IDconcU -50223.03 -0.002500  -15.07  -0.005000 0.500000 0.000000 0.000000;
-# Reinforcing steel 
-uniaxialMaterial Steel02 $IDSteel 422085 198513375 0.0064 20 0.925 0.15; 
+uniaxialMaterial Concrete01 $IDconcCore $fc $eps $fc2 $eps2;	
+# STEEL 
+# Reinforcing STEEL 
+uniaxialMaterial Steel02 $IDSteel 319953.49 201118697 0.005 20 0.925 0.15; 
+uniaxialMaterial Elastic 100 [expr 500000000*1000];
+uniaxialMaterial Elastic 101 5;
 
+# Fiber section properties 
 # Fiber section properties 
 set y1 [expr 0.5000/2.0] 
 set z1 [expr 0.5000/2.0] 
@@ -66,16 +86,30 @@ layer straight $IDSteel 2 0.000201 [expr $y1-$cover-$distY*2] [expr $z1-$cover] 
 set np 4
 #element connectivity 
 element nonlinearBeamColumn 1 11 12 $np 1 $ColTransfTag
+element zeroLength 1112 112 12 -mat 100 100 101 -dir 1 2 3
 element nonlinearBeamColumn 2 21 22 $np 1 $ColTransfTag
+element zeroLength 1122 122 22 -mat 100 100 101 -dir 1 2 3
+element zeroLength 1222 22 222 -mat 100 100 101 -dir 1 2 3
 element nonlinearBeamColumn 3 31 32 $np 1 $ColTransfTag
-element elasticBeamColumn 101 112 122 40305087 0.107000 0.013400 $BeamTransfTag 
-element elasticBeamColumn 102 122 132 40305087 0.107000 0.013400 $BeamTransfTag 
+element zeroLength 1132 132 32 -mat 100 100 101 -dir 1 2 3
+element zeroLength 1232 32 232 -mat 100 100 101 -dir 1 2 3
+element nonlinearBeamColumn 4 41 42 $np 1 $ColTransfTag
+element zeroLength 1142 142 42 -mat 100 100 101 -dir 1 2 3
+element zeroLength 1242 42 242 -mat 100 100 101 -dir 1 2 3
+element nonlinearBeamColumn 5 51 52 $np 1 $ColTransfTag
+element zeroLength 1152 152 52 -mat 100 100 101 -dir 1 2 3
+element elasticBeamColumn 101 112 122 0.290000 38236762 0.022000 $BeamTransfTag 
+element elasticBeamColumn 102 222 132 0.290000 38236762 0.022000 $BeamTransfTag 
+element elasticBeamColumn 103 232 142 0.290000 38236762 0.022000 $BeamTransfTag 
+element elasticBeamColumn 104 242 152 0.290000 38236762 0.022000 $BeamTransfTag 
 
 # define GRAVITY 
 pattern Plain 1 Linear {
-   load  12   0.0  -156.2 0.0
-   load  22   0.0  -312.4 0.0
-   load  32   0.0  -156.2 0.0
+   load  12   0.0  -197.1 0.0
+   load  22   0.0  -394.3 0.0
+   load  32   0.0  -394.3 0.0
+   load  42   0.0  -394.3 0.0
+   load  52   0.0  -197.1 0.0
 }
 set pi [expr 2.0*asin(1.0)];
 set lambda [eigen  4];
@@ -84,9 +118,6 @@ set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex
      puts $outfile $T 
 puts "T = $T s"
 
-# display deformed shape:
-set ViewScale 5;
-DisplayModel2D DeformedShape $ViewScale ;
 set Tol 1.0e-5; 
 set NstepGravity 20; 
 set DGravity [expr 1./$NstepGravity]; 

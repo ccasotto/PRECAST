@@ -9,16 +9,23 @@ fprintf(file,'set maxSteps %5.0f\n',maxSteps);
 fprintf(file,'set dt %1.3f \n',dt);
 fprintf(file,'# SET RECORDERS \n');
 
-node = [];
+nodeBase = [];
+nodeTop = [];
 for i=1:asset.noBays+1
-	node = [node i*10+1];
+	nodeBase = [nodeBase i*10+1];
+    nodeTop = [nodeTop i*10+2];
 end
 
 fprintf(file,'#Create a recorder to monitor nodal displacements \n');
-fprintf(file,'recorder Node -file nodeDisp_dynamic.txt -node 1%i -dof 1 disp \n',asset.noStoreys+1);
-fprintf(file,'recorder Node -file nodeReaction_dynamic.txt -node ');
-node=sprintf('%d ',node);
-fprintf(file,node);
+fprintf(file,'recorder Node -file tmp/nodeDisp_dynamic.txt -node 1%i -dof 1 disp \n',asset.noStoreys+1);
+fprintf(file,'recorder Node -file tmp/nodeAcc_dynamic.txt -node ');
+nodeTop=sprintf('%d ',nodeTop);
+fprintf(file,nodeTop);
+fprintf(file,'-dof 1 accel \n');
+
+fprintf(file,'recorder Node -file tmp/nodeReaction_dynamic.txt -node ');
+nodeBase=sprintf('%d ',nodeBase);
+fprintf(file,nodeBase);
 fprintf(file,'-dof 1 2 reaction \n');
 
 TF = strcmp(units,'cm/s/s');
@@ -33,7 +40,9 @@ end
 
 fprintf(file,'puts "Starting Dynamic analysis"; \n');
 fprintf(file,'set accelSeries "Series -dt %1.4f -filePath gmr1.tcl -factor %1.3f "\n',dt,factor*fx);
-fprintf(file,'pattern UniformExcitation 3 1 -accel $accelSeries\n');
+fprintf(file,'set accelSeries2 "Series -dt %1.4f -filePath gmr0.tcl -factor %1.3f "\n',dt,factor*fz);
+fprintf(file,'pattern UniformExcitation 3 1 -accel $accelSeries; \n');
+fprintf(file,'pattern UniformExcitation 4 2 -accel $accelSeries2; \n');
 
 fprintf(file,'# set damping based on first eigen mode\n');
 fprintf(file,'	set pi [expr 2.0*asin(1.0)];						# Definition of pi\n');
@@ -89,15 +98,6 @@ fprintf(file,'	    test NormDispIncr 1.0e-3  100 \n');
 fprintf(file,'	    algorithm Newton \n');
 fprintf(file,'	} \n');
 
-fprintf(file,'	if {$ok != 0} { \n');
-fprintf(file,'	algorithm Broyden\n');
-fprintf(file,'	test NormDispIncr 1.0e-4 50 0 \n');
-fprintf(file,'	    set ok [analyze 1 $dt] \n');
-fprintf(file,'	    if {$ok == 0} {puts "that worked .. back to regular newton"} \n');
-fprintf(file,'	    test NormDispIncr 1.0e-3  100 \n');
-fprintf(file,'	    algorithm Newton \n');
-fprintf(file,'	} \n');
-
 fprintf(file,'	set step [expr $step+1]\n');
 fprintf(file,'	if {$step > $maxSteps} { \n');
 fprintf(file,'	    break\n');
@@ -114,4 +114,4 @@ fprintf(file,'if {$ok == 0} { \n');
 fprintf(file,'     puts $outfile "OK" \n');
 fprintf(file,'}\n'); 
 fclose(file);
-eval(['!',a,'\OpenSees.exe',' ','dynamic.tcl']) 
+eval(['!../OpenSees',' ','dynamic.tcl']) 
