@@ -22,7 +22,7 @@ addpath('../common/');
 %% Analyses
 for typology = 1:noTypologies
     noAsset = 1;
-	pdm = variables(lastNGA, noLSs);
+	pdm = variables(lastNGA, noLSs,c);
 	while noAsset <= portfolio(typology,2)
         asset = sampleGeometry(portfolio(typology,1),preCode,portfolio(typology,3),c);
         action = computeActions(asset);
@@ -37,23 +37,24 @@ for typology = 1:noTypologies
 		counter = 1;
 		for j = 1:3:lastNGA
 			[noAsset j]
-			[maxSteps] = parseAccelerogram3D(j,NGA);
+			[maxSteps] = parseAccelerogram3D(j,NGA,2);
 			dt = 0.01;
 			time = dt:dt:(maxSteps*dt);
 			fx = 1; fy = 1; fz = 1;
 			units = 'g';
 			dynamic3D;
 			[output] = processOut(asset);
+            [ output ] = NewmarkSlidingBlock3D(output, action, connection.Vb(cnn), asset, dt);
 			[DS] = assignDamage3D(output,limit,asset, connection, cnn);
 			pdm = BuildDPM(pdm, DS, counter);
-			if noAsset == 1;
-				for i = 0:2
-				acc = dlmread(strcat('gmr',num2str(i),'.tcl'));
-				time = dt:dt:(length(acc)*dt);
-				response = Spectrum_v2([time' acc], 0.05, units, 2);
-				pdm(counter,5+i) = response.Sa;
-				end
-			end
+% 			if noAsset == 1;
+% 				for i = 0:2
+% 				acc = dlmread(strcat('gmr',num2str(i),'.tcl'));
+% 				time = dt:dt:(length(acc)*dt);
+% 				response = Spectrum_v2([time' acc], 0.05, units, 2);
+% 				pdm(counter,5+i) = response.Sa;
+% 				end
+% 			end
 			counter = counter+1;
 		end
 		for i = 1:13
@@ -65,40 +66,30 @@ for typology = 1:noTypologies
 			fy = m(3*(i-1)+3);
 			h = t(i);
 			units = 'g';
-			[maxSteps] = parseAccelerogram3D(h,NGA);
+			[maxSteps] = parseAccelerogram3D(h,NGA,2);
 			dynamic3D;
-			[output] = processdata(asset);
-			[DS,ds] = assignDamage3D(output,limit,asset, connection, cnn);
-			[DS3,ds3] = assignDamage3D03(output,limit,asset, connection, cnn);
-			[OC] = assignDamageOC(output,asset, connection, cnn);
-			[OC3] = assignDamageOC03(output,asset, connection, cnn);
-			[WO,wo] = assignDamageWO(output,limit);
-			pdm(counter,DS) = pdm(counter,DS)+1;
-			pdm3(counter,DS3) = pdm3(counter,DS3)+1;
-			pdmOC(counter,OC) = pdmOC(counter,OC)+1;
-			pdmWO(counter,WO) = pdmWO(counter,WO)+1;
-			pdmOC3(counter,OC3) = pdmOC3(counter,OC3)+1;
-			pdm(counter,4) = ds;
-			pdm3(counter,4) = ds3;
-			pdmWO(counter,4) = wo;
-			if noAsset==1;
-				for i = 0:2
-					acc = dlmread(strcat('gmr',num2str(i),'.tcl'));
-					time = dt:dt:(length(acc)*dt);
-					response = Spectrum_v2([time' acc], 0.05, units, 2);
-					pdm(counter,5+i) = response.Sa;
-				end
-			end
+            [output] = processOut(asset);
+            [ output ] = NewmarkSlidingBlock3D(output, action, connection.Vb(cnn), asset, dt);
+			[DS] = assignDamage3D(output,limit,asset, connection, cnn);
+			pdm = BuildDPM(pdm, DS, counter);
+% 			if noAsset==1;
+% 				for i = 0:2
+% 					acc = dlmread(strcat('gmr',num2str(i),'.tcl'));
+% 					time = dt:dt:(length(acc)*dt);
+% 					response = Spectrum_v2([time' acc], 0.05, units, 2);
+% 					pdm(counter,5+i) = response.Sa;
+% 				end
+% 			end
 			counter = counter+1;
 		end
  		noAsset = noAsset+1;
 	end
 	close all
-	dlmwrite(strcat('pdm',num2str(typology),'.tcl'),pdm,'delimiter','	');
-	dlmwrite(strcat('pdm3',num2str(typology),'.tcl'),pdm3,'delimiter','	');
-	dlmwrite(strcat('pdmOC',num2str(typology),'.tcl'),pdmOC,'delimiter','	');
-	dlmwrite(strcat('pdmOC3',num2str(typology),'.tcl'),pdmOC3,'delimiter','	');
-	dlmwrite(strcat('pdmWO',num2str(typology),'.tcl'),pdmWO,'delimiter','	');
+    for fr=1:length(c)
+        dlmwrite(strcat('pdm',num2str(typology),'_',num2str(c(fr)),'.tcl'),pdm.TOT{fr},'delimiter','	');
+        dlmwrite(strcat('pdmOC',num2str(typology),'_',num2str(c(fr)),'.tcl'),pdm.OC{fr},'delimiter','	');
+        dlmwrite(strcat('pdmWO',num2str(typology),'_',num2str(c(fr)),'tcl'),pdm.WO{fr},'delimiter','	');
+    end
 end
 
 

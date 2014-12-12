@@ -19,13 +19,27 @@ for  frame = 1:asset.noBayZ+1
 end
 	  
 for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-	fprintf(file,'recorder Node -file nodeDisp_dynamic_');
+	fprintf(file,'recorder Node -file tmp/nodeDisp_dynamic_');
 	fprintf(file,'n%i',node);
 	fprintf(file,'.txt -node %i -dof 1 2 3 disp \n',TopNode(node));
 end
-fprintf(file,'recorder Node -file nodeReaction_dynamic.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 2 3 4 5 6 reaction \n');
-fprintf(file,'recorder Element -file ForceCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast localForce;\n');
-fprintf(file,'recorder Element -file DeformCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast section 1 deformation;\n');
+
+
+fprintf(file,'recorder Node -file tmp/nodeAccX_dynamic.txt -node');
+for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
+    fprintf(file,' %i ',TopNode(node));
+end
+fprintf(file,'-dof 1 accel \n');
+
+fprintf(file,'recorder Node -file tmp/nodeAccY_dynamic.txt -node');
+for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
+    fprintf(file,' %i ',TopNode(node));
+end
+fprintf(file,'-dof 3 accel \n');
+
+fprintf(file,'recorder Node -file tmp/nodeReaction_dynamic.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 2 3 4 5 6 reaction \n');
+fprintf(file,'recorder Element -file tmp/ForceCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast localForce;\n');
+fprintf(file,'recorder Element -file tmp/DeformCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast section 1 deformation;\n');
 % fprintf(file,'recorder Element -file CStressCol_F1.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber -$coreY $coreZ $IDconcCore stressStrain;\n' );
 % fprintf(file,'recorder Element -file CStressCol_F2.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber -$coreY -$coreZ $IDconcCore stressStrain;\n' );
 % fprintf(file,'recorder Element -file CStressCol_F3.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY -$coreZ $IDconcCore stressStrain;\n' );
@@ -100,23 +114,6 @@ fprintf(file,'	    test NormDispIncr 1.0e-3  100 \n');
 fprintf(file,'	    algorithm Newton \n');
 fprintf(file,'	} \n');
 
-fprintf(file,'	if {$ok != 0} { \n');
-fprintf(file,'	algorithm NewtonLineSearch 0.8\n');
-fprintf(file,'	    set ok [analyze 1 $dt] \n');
-fprintf(file,'	    if {$ok == 0} {puts "that worked .. back to regular newton"} \n');
-fprintf(file,'	    test NormDispIncr 1.0e-3  100 \n');
-fprintf(file,'	    algorithm Newton \n');
-fprintf(file,'	} \n');
-
-fprintf(file,'	if {$ok != 0} { \n');
-fprintf(file,'	algorithm Broyden\n');
-fprintf(file,'	test NormDispIncr 1.0e-4 50 0 \n');
-fprintf(file,'	    set ok [analyze 1 $dt] \n');
-fprintf(file,'	    if {$ok == 0} {puts "that worked .. back to regular newton"} \n');
-fprintf(file,'	    test NormDispIncr 1.0e-3  100 \n');
-fprintf(file,'	    algorithm Newton \n');
-fprintf(file,'	} \n');
-
 fprintf(file,'	set step [expr $step+1]\n');
 fprintf(file,'	if {$step > $maxSteps} { \n');
 fprintf(file,'	    break\n');
@@ -135,4 +132,4 @@ fprintf(file,'     puts $outfile "OK" \n');
 fprintf(file,'     puts "Dynamic Analysis Completed" \n');
 fprintf(file,'}\n'); 
 fclose(file);
-eval(['!',a,'\OpenSees.exe',' ','dynamic.tcl']) 
+eval(['!../OpenSees',' ','dynamic.tcl']) 

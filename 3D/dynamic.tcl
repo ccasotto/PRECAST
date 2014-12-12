@@ -3,29 +3,31 @@ source DisplayModel3D.tcl;
 source DisplayPlane.tcl;
 puts "Gravity Analysis Completed"
 loadConst -time 0.0
-set maxSteps  3236
+set maxSteps  3627
 set dt 0.010 
 # SET RECORDERS 
 #Create a recorder to monitor nodal displacements 
-recorder Node -file nodeDisp_dynamic_n1.txt -node 20101 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n2.txt -node 20102 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n3.txt -node 20103 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n4.txt -node 20201 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n5.txt -node 20202 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n6.txt -node 20203 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n7.txt -node 20301 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n8.txt -node 20302 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n9.txt -node 20303 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n10.txt -node 20401 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n11.txt -node 20402 -dof 1 2 3 disp 
-recorder Node -file nodeDisp_dynamic_n12.txt -node 20403 -dof 1 2 3 disp 
-recorder Node -file nodeReaction_dynamic.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 2 3 4 5 6 reaction 
-recorder Element -file ForceCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast localForce;
-recorder Element -file DeformCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast section 1 deformation;
+recorder Node -file tmp/nodeDisp_dynamic_n1.txt -node 20101 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n2.txt -node 20102 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n3.txt -node 20103 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n4.txt -node 20201 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n5.txt -node 20202 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n6.txt -node 20203 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n7.txt -node 20301 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n8.txt -node 20302 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n9.txt -node 20303 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n10.txt -node 20401 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n11.txt -node 20402 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeDisp_dynamic_n12.txt -node 20403 -dof 1 2 3 disp 
+recorder Node -file tmp/nodeAccX_dynamic.txt -node 20101  20102  20103  20201  20202  20203  20301  20302  20303  20401  20402  20403 -dof 1 accel 
+recorder Node -file tmp/nodeAccY_dynamic.txt -node 20101  20102  20103  20201  20202  20203  20301  20302  20303  20401  20402  20403 -dof 3 accel 
+recorder Node -file tmp/nodeReaction_dynamic.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 2 3 4 5 6 reaction 
+recorder Element -file tmp/ForceCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast localForce;
+recorder Element -file tmp/DeformCol_dynamic.txt -eleRange $ColumnFirst $ColumnLast section 1 deformation;
 set IDloadTag 400;	# for uniformSupport excitation
 set iGMfile "gmr0.tcl gmr1.tcl gmr2.tcl" ;		# ground-motion filenames, should be different files
 set iGMdirection "2 1 3";			# ground-motion direction
-set iGMfact "13.73 11.77 13.73"; 
+set iGMfact "9.81 9.81 9.81"; 
 foreach GMdirection $iGMdirection GMfile $iGMfile GMfact $iGMfact {
 	incr IDloadTag;
 	set AccelSeries "Series -dt $dt -filePath $GMfile -factor  $GMfact";		# time series information
@@ -63,21 +65,6 @@ while {$ok == 0} {
 	    test NormDispIncr 1.0e-3  800  
 	    algorithm ModifiedNewton -initial 
 	    set ok [analyze 1 0.01000] 
-	    if {$ok == 0} {puts "that worked .. back to regular newton"} 
-	    test NormDispIncr 1.0e-3  100 
-	    algorithm Newton 
-	} 
-	if {$ok != 0} { 
-	algorithm NewtonLineSearch 0.8
-	    set ok [analyze 1 $dt] 
-	    if {$ok == 0} {puts "that worked .. back to regular newton"} 
-	    test NormDispIncr 1.0e-3  100 
-	    algorithm Newton 
-	} 
-	if {$ok != 0} { 
-	algorithm Broyden
-	test NormDispIncr 1.0e-4 50 0 
-	    set ok [analyze 1 $dt] 
 	    if {$ok == 0} {puts "that worked .. back to regular newton"} 
 	    test NormDispIncr 1.0e-3  100 
 	    algorithm Newton 
