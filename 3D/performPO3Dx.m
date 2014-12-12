@@ -15,13 +15,13 @@ for  frame = 1:asset.noBayZ+1
 end
 	  
 for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-	fprintf(file,'recorder Node -file nodeDispX_po_');
+	fprintf(file,'recorder Node -file tmp/nodeDispX_po_');
 	fprintf(file,'n%i',node);
 	fprintf(file,'.txt -node %i -dof 1 disp \n',TopNode(node));
 end
-	fprintf(file,'recorder Node -file nodeReactionX_po.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 reaction;\n');
-	fprintf(file,'recorder Element -file SteelStressStrainXX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber -$coreY -$coreZ $IDSteel stressStrain; \n');
-    fprintf(file,'recorder Element -file ConcreteStressStrainXX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY 0 $IDconcCore stressStrain;\n');
+	fprintf(file,'recorder Node -file tmp/nodeReactionX_po.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 reaction;\n');
+	fprintf(file,'recorder Element -file tmp/SteelStressStrainXX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber -$coreY -$coreZ $IDSteel stressStrain; \n');
+    fprintf(file,'recorder Element -file tmp/ConcreteStressStrainXX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY 0 $IDconcCore stressStrain;\n');
     fprintf(file,'\n');
 	
 	incr = 0.002;
@@ -91,12 +91,6 @@ end
 				fprintf(file,'algorithm Newton\n');
 				fprintf(file,'}	\n');			
 			fprintf(file,'}\n');
-			
-% 		fprintf(file,'set numsMode 4;\n');
-% 		fprintf(file,'set pi [expr 2.0*asin(1.0)];\n');
-% 		fprintf(file,'set lambda [eigen  4];\n');
-% 		fprintf(file,'set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)] [expr 2.0*$pi/pow([lindex $lambda 2],0.5)] [expr 2.0*$pi/pow([lindex $lambda 3],0.5)]]\n');
-% 		fprintf(file,'puts $outfile $T\n');
 
 	fprintf(file,'}; # end if\n');
 	fprintf(file,'\n');
@@ -105,4 +99,4 @@ end
 	fprintf(file,'puts "Done!"\n');
 	fprintf(file,'}\n');
 	fclose(file);
-    eval(['!',a,'\OpenSees.exe',' ','POAnalysis3D.tcl']) 
+    eval(['!../OpenSees',' ','POAnalysis3D.tcl']) 

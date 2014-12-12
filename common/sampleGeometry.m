@@ -1,4 +1,4 @@
-function asset = sampleGeometry2D(type,preCode,s,friction)
+function asset = sampleGeometry(type,preCode,s,friction)
 
     asset.Code = preCode;
     asset.s = s;
@@ -7,7 +7,7 @@ function asset = sampleGeometry2D(type,preCode,s,friction)
  if type == 1
 	asset.type = 1;
     asset.noStoreys = 1;
-	asset.noBayZ = 0;
+	asset.noBayZ = 3;
     asset.noBays = 2;
     asset.ColH_ground = sampleTruncLognrml(1.9,0.2,4,12,1,1);
     asset.BeamLengths = sampleTruncLognrml(2.7,0.3,8,30,1,1);
@@ -24,7 +24,7 @@ function asset = sampleGeometry2D(type,preCode,s,friction)
 	asset.type = 2;
     asset.noStoreys = 1;
  	asset.noBays = 4;
-	asset.noBayZ = 0;
+	asset.noBayZ = 3;
     asset.ColH_ground = sampleTruncNrml(6.5,1.3,4,11,1,1); 
     asset.BeamLengths = sampleTruncNrml(8.7,2,8,10,1,1); 
    	asset.InterCol = sampleTruncNrml(16.5,3.7,10,25,1,1);

@@ -24,11 +24,11 @@ for typology = 1:noTypologies
     noAsset = 1;
 	pdm = variables(lastNGA, noLSs);
 	while noAsset <= portfolio(typology,2)
-        asset = sampleGeometry3D(portfolio(typology,1),preCode,portfolio(typology,3),c);
-        action = computeActions3D(asset);
+        asset = sampleGeometry(portfolio(typology,1),preCode,portfolio(typology,3),c);
+        action = computeActions(asset);
         asset = designAsset(asset,action);
 		connection = ConnectionLimitState(asset, action);
-  		buildInelasticModel3Djoints(asset,action);
+  		buildInelasticModel3D(asset,action);
 		performPO3Dx
 		performPO3Dy
  		dir = [1 0 1];
@@ -44,16 +44,6 @@ for typology = 1:noTypologies
 			units = 'g';
 			dynamic3D;
 			[output] = processOut(asset);
-% 			figure(2)
-% 			plot(time,output.Vfr(:,1)+connection.Vb(cnn))
-% 			hold on
-% 			plot(time,output.Ved(:,1),'r')
-% 			hold off
-%			figure(3)
-% 			plot(time,output.DispX(:,1)*asset.ColH_ground)
-% 			hold on
-% 			plot(time,output.DispY(:,1)*asset.ColH_ground)
-% 			plot(time,output.Dist(:,1)*asset.ColH_ground,'k')
 			[DS] = assignDamage3D(output,limit,asset, connection, cnn);
 			pdm = BuildDPM(pdm, DS, counter);
 			if noAsset == 1;

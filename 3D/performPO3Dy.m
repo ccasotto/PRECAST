@@ -14,13 +14,13 @@ for  frame = 1:asset.noBayZ+1
 end
 	  
 for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-	fprintf(file,'recorder Node -file nodeDispY_po_');
+	fprintf(file,'recorder Node -file tmp/nodeDispY_po_');
 	fprintf(file,'n%i',node);
 	fprintf(file,'.txt -node %i -dof 3 disp \n',TopNode(node));
 end
-	fprintf(file,'recorder Node -file nodeReactionY_po.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 3 reaction;\n');
-    fprintf(file,'recorder Element -file SteelStressStrainYY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY $coreZ $IDSteel stressStrain; \n');
-    fprintf(file,'recorder Element -file ConcreteStressStrainYY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber 0 -$coreZ $IDconcCore stressStrain;\n');
+	fprintf(file,'recorder Node -file tmp/nodeReactionY_po.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 3 reaction;\n');
+    fprintf(file,'recorder Element -file tmp/SteelStressStrainYY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY $coreZ $IDSteel stressStrain; \n');
+    fprintf(file,'recorder Element -file tmp/ConcreteStressStrainYY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber 0 -$coreZ $IDconcCore stressStrain;\n');
 	fprintf(file,'\n');
 	
 	incr = 0.002;
@@ -90,14 +90,6 @@ end
 				fprintf(file,'algorithm Newton\n');
 				fprintf(file,'}	\n');			
 			fprintf(file,'}\n');
-			
-% 		fprintf(file,'set numsMode 4;\n');
-% 		fprintf(file,'set numsStory 1;\n');
-% 		fprintf(file,'set pi [expr 2.0*asin(1.0)];\n');
-% 		fprintf(file,'set lambda [eigen  4];\n');
-% 		fprintf(file,'set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)] [expr 2.0*$pi/pow([lindex $lambda 2],0.5)] [expr 2.0*$pi/pow([lindex $lambda 3],0.5)]]\n');
-% 		fprintf(file,'puts $outfile $T\n');
-
 	fprintf(file,'}; # end if\n');
 	fprintf(file,'\n');
 	
@@ -105,4 +97,4 @@ end
 	fprintf(file,'puts "Done!"\n');
 	fprintf(file,'}\n');
 	fclose(file);
-    eval(['!',a,'\OpenSees.exe',' ','POAnalysis3D.tcl']) 
+    eval(['!../OpenSees',' ','POAnalysis3D.tcl']) 

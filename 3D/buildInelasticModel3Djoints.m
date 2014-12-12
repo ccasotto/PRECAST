@@ -1,4 +1,4 @@
-function buildInelasticModel3Djoints(asset,action)
+function buildInelasticModel3_v2(asset,action)
 	a = pwd;
 	
     file = fopen('buildInelasticModel3D.tcl', 'w+');

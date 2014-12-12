@@ -15,19 +15,19 @@ for  frame = 1:asset.noBayZ+1
 end
 	  
 for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-	fprintf(file,'recorder Node -file nodeDisp_po_');
+	fprintf(file,'recorder Node -file tmp/nodeDisp_po_');
 	fprintf(file,'n%i',node);
 	fprintf(file,'.txt -node %i -dof 1 2 3 disp \n',TopNode(node));
 end
-	fprintf(file,'recorder Node -file nodeReaction_po.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 2 3 reaction;\n');
+	fprintf(file,'recorder Node -file tmp/nodeReaction_po.txt -nodeRange $SupportNodeFirst $SupportNodeLast -dof 1 2 3 reaction;\n');
 % 	fprintf(file,'recorder Element -file BeamForce.txt -ele 1020101 globalForce;\n');
-	fprintf(file,'recorder Element -file ColForce.txt -ele 20100 globalForce;\n');
-	fprintf(file,'recorder Element -file ColDef.txt -ele 20100 section 1 deformation;\n');
+	fprintf(file,'recorder Element -file tmp/ColForce.txt -ele 20100 globalForce;\n');
+	fprintf(file,'recorder Element -file tmp/ColDef.txt -ele 20100 section 1 deformation;\n');
 % 	fprintf(file,'recorder Element -file GirderForce.txt -ele 2020101 globalForce;\n');	
-	fprintf(file,'recorder Element -file SteelStressStrainX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber -$coreY -$coreZ $IDSteel stressStrain; \n');
-    fprintf(file,'recorder Element -file ConcreteStressStrainX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY 0 $IDconcCore stressStrain;\n');
-    fprintf(file,'recorder Element -file SteelStressStrainY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY $coreZ $IDSteel stressStrain; \n');
-    fprintf(file,'recorder Element -file ConcreteStressStrainY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber 0 -$coreZ $IDconcCore stressStrain;\n');
+	fprintf(file,'recorder Element -file tmp/SteelStressStrainX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber -$coreY -$coreZ $IDSteel stressStrain; \n');
+    fprintf(file,'recorder Element -file tmp/ConcreteStressStrainX.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY 0 $IDconcCore stressStrain;\n');
+    fprintf(file,'recorder Element -file tmp/SteelStressStrainY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber $coreY $coreZ $IDSteel stressStrain; \n');
+    fprintf(file,'recorder Element -file tmp/ConcreteStressStrainY.txt -eleRange $ColumnFirst $ColumnLast section 1 fiber 0 -$coreZ $IDconcCore stressStrain;\n');
 	fprintf(file,'\n');
 	
 	incrX = 0.001;
@@ -113,17 +113,11 @@ end
 
 	fprintf(file,'}; # end if\n');
 	fprintf(file,'\n');
-	
-			fprintf(file,'set numsMode 4;\n');
-		fprintf(file,'set pi [expr 2.0*asin(1.0)];\n');
-		fprintf(file,'set lambda [eigen fullGenLapack 3];\n');
-		fprintf(file,'set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)] [expr 2.0*$pi/pow([lindex $lambda 2],0.5)]]\n');
-		fprintf(file,'puts $outfile $T\n');
 		
 	fprintf(file,'if {$ok == 0} {\n');
 	fprintf(file,'puts "Done!"\n');
 	fprintf(file,'}\n');
 	fclose(file);
-    eval(['!',a,'\OpenSees.exe',' ','POAnalysis3D.tcl']) 
+    eval(['!../OpenSees',' ','POAnalysis3D.tcl']) 
 	
 end

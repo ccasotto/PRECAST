@@ -3,16 +3,16 @@ function [ limit ] = Limit3D( asset )
 %LIMIT This function computes the limit states for the 3D model
 %   Detailed explanation goes here
 	for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-		Disp_po(:,1+((node-1)*3):3+((node-1)*3)) = dlmread(horzcat('nodeDisp_po_n',num2str(node),'.txt'))/asset.ColH_ground;
-	end
-Vb_po = dlmread('nodeReaction_po.txt');
-Vb_po = abs(Vb_po);
-ConcreteX = dlmread('ConcreteStressStrainX.txt');
-ConcreteY = dlmread('ConcreteStressStrainX.txt');
-SteelX = dlmread('SteelStressStrainX.txt');
-SteelY = dlmread('SteelStressStrainY.txt');
-LS2s = zeros(1,size(Vb_po,2)/3);
-counter = 1;
+		Disp_po(:,1+((node-1)*3):3+((node-1)*3)) = dlmread(horzcat('tmp/nodeDisp_po_n',num2str(node),'.txt'))/asset.ColH_ground;
+    end
+    Vb_po = dlmread('tmp/nodeReaction_po.txt');
+    Vb_po = abs(Vb_po);
+    ConcreteX = dlmread('tmp/ConcreteStressStrainX.txt');
+    ConcreteY = dlmread('tmp/ConcreteStressStrainX.txt');
+    SteelX = dlmread('tmp/SteelStressStrainX.txt');
+    SteelY = dlmread('tmp/SteelStressStrainY.txt');
+    LS2s = zeros(1,size(Vb_po,2)/3);
+    counter = 1;
 	for j= 1:3:size(Vb_po,2)
 		i = 2:1:length(Vb_po);
 		h = 1:1:length(Vb_po)-1;
@@ -56,27 +56,27 @@ counter = 1;
 % 		end 
  		counter = counter+1;
 	end
-v1 = 1:3:size(Vb_po,2);
-v2 = 3:3:size(Vb_po,2);
-DispX = Disp_po(:,v1);
-DispY = Disp_po(:,v2);
-Disp = (DispX.^2 + DispY.^2).^0.5;
-VbX = sum(Vb_po(:,v1)')';
-VbY = sum(Vb_po(:,v2)')';
-plot(DispX(:,1),VbX,'b');
-hold on
-plot(DispY(:,1),VbY,'r');
-clear j h z f 
-% First Limit State for each column
-fsx = find(SteelX(:,2) > asset.esy);
-fsy = find(SteelY(:,2) > asset.esy);
-f1 = [fsx(1) fsy(1)];
-limit.LS1 = Disp(min(f1),1);
-		
-% First Limit State for the whole structure
-limit.tot1 = min(limit.LS1);
+    v1 = 1:3:size(Vb_po,2);
+    v2 = 3:3:size(Vb_po,2);
+    DispX = Disp_po(:,v1);
+    DispY = Disp_po(:,v2);
+    Disp = (DispX.^2 + DispY.^2).^0.5;
+    VbX = sum(Vb_po(:,v1)')';
+    VbY = sum(Vb_po(:,v2)')';
+    plot(DispX(:,1),VbX,'b');
+    hold on
+    plot(DispY(:,1),VbY,'r');
+    clear j h z f 
+    % First Limit State for each column
+    fsx = find(SteelX(:,2) > asset.esy);
+    fsy = find(SteelY(:,2) > asset.esy);
+    f1 = [fsx(1) fsy(1)];
+    limit.LS1 = Disp(min(f1),1);
+
+    % First Limit State for the whole structure
+    limit.tot1 = min(limit.LS1);
 	
-% Second Limit State for each column
+    % Second Limit State for each column
 	LS220 = zeros(1,size(Vb_po,2)/3);
 	counter = 1;
 	for j= 1:3:size(Vb_po,2)
@@ -152,11 +152,11 @@ limit.tot1 = min(limit.LS1);
 %% Limits in the two directions separately
 % In X
 	for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-		DispXX(:,node) = dlmread(horzcat('nodeDispX_po_n',num2str(node),'.txt'))/asset.ColH_ground;
+		DispXX(:,node) = dlmread(horzcat('tmp/nodeDispX_po_n',num2str(node),'.txt'))/asset.ColH_ground;
 	end
-	VbXX = dlmread('nodeReactionX_po.txt');
+	VbXX = dlmread('tmp/nodeReactionX_po.txt');
 	VbXX = sum(abs(VbXX'))';
-	SteelXX = dlmread('SteelStressStrainXX.txt');
+	SteelXX = dlmread('tmp/SteelStressStrainXX.txt');
 % First Limit State for the whole structure
 	counter = 1;
 	for j= 2:2:size(SteelXX,2)
@@ -180,11 +180,11 @@ limit.tot1 = min(limit.LS1);
 
 % In Y
 	for node = 1:(asset.noBayZ+1)*(asset.noBays+1)
-		DispYY(:,node) = dlmread(horzcat('nodeDispY_po_n',num2str(node),'.txt'))/asset.ColH_ground;
+		DispYY(:,node) = dlmread(horzcat('tmp/nodeDispY_po_n',num2str(node),'.txt'))/asset.ColH_ground;
 	end
-	VbYY = dlmread('nodeReactionY_po.txt');
+	VbYY = dlmread('tmp/nodeReactionY_po.txt');
 	VbYY = sum(abs(VbYY'));
-	SteelYY = dlmread('SteelStressStrainYY.txt');
+	SteelYY = dlmread('tmp/SteelStressStrainYY.txt');
 % First Limit State for the whole structure
 	counter = 1;
 	for j= 2:2:size(SteelYY,2)
