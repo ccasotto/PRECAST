@@ -3,7 +3,7 @@ source DisplayModel3D.tcl;
 source DisplayPlane.tcl;
 puts "Gravity Analysis Completed"
 loadConst -time 0.0
-set maxSteps  3627
+set maxSteps  3236
 set dt 0.010 
 # SET RECORDERS 
 #Create a recorder to monitor nodal displacements 
@@ -27,7 +27,7 @@ recorder Element -file tmp/DeformCol_dynamic.txt -eleRange $ColumnFirst $ColumnL
 set IDloadTag 400;	# for uniformSupport excitation
 set iGMfile "gmr0.tcl gmr1.tcl gmr2.tcl" ;		# ground-motion filenames, should be different files
 set iGMdirection "2 1 3";			# ground-motion direction
-set iGMfact "9.81 9.81 9.81"; 
+set iGMfact "13.73 11.77 13.73"; 
 foreach GMdirection $iGMdirection GMfile $iGMfile GMfact $iGMfact {
 	incr IDloadTag;
 	set AccelSeries "Series -dt $dt -filePath $GMfile -factor  $GMfact";		# time series information

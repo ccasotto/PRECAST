@@ -2,29 +2,29 @@ model basic -ndm 2 -ndf 3
 set cover 0.030 
 # nodal coordinates:
 node 11 0.00 0.00 
-node 21 8.69 0.00 
-node 31 17.38 0.00 
-node 41 26.07 0.00 
-node 51 34.76 0.00 
-node 12 0.00 5.90 
-node 22 8.69 5.90 
-node 32 17.38 5.90 
-node 42 26.07 5.90 
-node 52 34.76 5.90 
-node 112 0.00 5.90 
-node 122 8.69 5.90 
-node 222 8.69 5.90 
-node 132 17.38 5.90 
-node 232 17.38 5.90 
-node 142 26.07 5.90 
-node 242 26.07 5.90 
-node 152 34.76 5.90 
+node 21 9.18 0.00 
+node 31 18.36 0.00 
+node 41 27.53 0.00 
+node 51 36.71 0.00 
+node 12 0.00 7.41 
+node 22 9.18 7.41 
+node 32 18.36 7.41 
+node 42 27.53 7.41 
+node 52 36.71 7.41 
+node 112 0.00 7.41 
+node 122 9.18 7.41 
+node 222 9.18 7.41 
+node 132 18.36 7.41 
+node 232 18.36 7.41 
+node 142 27.53 7.41 
+node 242 27.53 7.41 
+node 152 36.71 7.41 
 #masses 
-mass 12 20.095 20.095 1e-9 
-mass 22 40.190 40.190 1e-9 
-mass 32 40.190 40.190 1e-9 
-mass 42 40.190 40.190 1e-9 
-mass 52 20.095 20.095 1e-9 
+mass 12 19.832 19.832 1e-9 
+mass 22 39.664 39.664 1e-9 
+mass 32 39.664 39.664 1e-9 
+mass 42 39.664 39.664 1e-9 
+mass 52 19.832 19.832 1e-9 
 
 # Fix Nodes 
 fix 11 1 1 1 
@@ -39,17 +39,17 @@ set ColTransfTag 2
 geomTransf Linear $BeamTransfTag 
 geomTransf PDelta $ColTransfTag 
 set numBarsCol 2 
-set barAreaCol [expr 0.000804/$numBarsCol] 
+set barAreaCol [expr 0.001206/$numBarsCol] 
 
 # Define MATERIALS -------------------------------------------------------------
 set IDconcCore  1;
 set IDSteel  2;
 # CONCRETE UNCONFINED 
-set fc  -49005;
+set fc  -54780;
 set eps -0.002500;	
-set fc2 -14702;	
+set fc2 -16434;	
 set eps2 -0.010000;
-set Ec 38236762;
+set Ec 40305087;
 set Ubig 1.e10; 
 set Usmall [expr 1/$Ubig]; 
 set lambda 0.005000;
@@ -60,17 +60,17 @@ set Ets    0.0;
 uniaxialMaterial Concrete01 $IDconcCore $fc $eps $fc2 $eps2;	
 # STEEL 
 # Reinforcing STEEL 
-uniaxialMaterial Steel02 $IDSteel 319953.49 201118697 0.005 20 0.925 0.15; 
+uniaxialMaterial Steel02 $IDSteel 440640.77 200337428 0.005 20 0.925 0.15; 
 uniaxialMaterial Elastic 100 [expr 500000000*1000];
 uniaxialMaterial Elastic 101 5;
 
 # Fiber section properties 
 # Fiber section properties 
-set y1 [expr 0.5000/2.0] 
-set z1 [expr 0.5000/2.0] 
+set y1 [expr 0.5500/2.0] 
+set z1 [expr 0.5500/2.0] 
 set coreY [expr $y1-$cover];
 set coreZ [expr $z1-$cover];
-set distY [expr $coreY*2/(4-1)]; 
+set distY [expr $coreY*2/(6-1)]; 
 section Fiber 1 {
 patch rect $IDconcCore 30 5 [expr $cover-$y1] [expr $cover-$z1] [expr $y1-$cover] [expr $z1-$cover]
 patch rect $IDconcCore 30 1  [expr -$y1] [expr $z1-$cover] $y1 $z1
@@ -81,6 +81,8 @@ layer straight $IDSteel $numBarsCol $barAreaCol [expr $y1-$cover] [expr $z1-$cov
 layer straight $IDSteel $numBarsCol $barAreaCol [expr $cover-$y1] [expr $z1-$cover] [expr $cover-$y1] [expr $cover-$z1]
 layer straight $IDSteel 2 0.000201 [expr $y1-$cover-$distY*1] [expr $z1-$cover] [expr $y1-$cover-$distY*1] [expr $cover-$z1]; # Internal layer
 layer straight $IDSteel 2 0.000201 [expr $y1-$cover-$distY*2] [expr $z1-$cover] [expr $y1-$cover-$distY*2] [expr $cover-$z1]; # Internal layer
+layer straight $IDSteel 2 0.000201 [expr $y1-$cover-$distY*3] [expr $z1-$cover] [expr $y1-$cover-$distY*3] [expr $cover-$z1]; # Internal layer
+layer straight $IDSteel 2 0.000201 [expr $y1-$cover-$distY*4] [expr $z1-$cover] [expr $y1-$cover-$distY*4] [expr $cover-$z1]; # Internal layer
 }  
 
 set np 4
@@ -98,22 +100,22 @@ element zeroLength 1142 142 42 -mat 100 100 101 -dir 1 2 3
 element zeroLength 1242 42 242 -mat 100 100 101 -dir 1 2 3
 element nonlinearBeamColumn 5 51 52 $np 1 $ColTransfTag
 element zeroLength 1152 152 52 -mat 100 100 101 -dir 1 2 3
-element elasticBeamColumn 101 112 122 0.290000 38236762 0.022000 $BeamTransfTag 
-element elasticBeamColumn 102 222 132 0.290000 38236762 0.022000 $BeamTransfTag 
-element elasticBeamColumn 103 232 142 0.290000 38236762 0.022000 $BeamTransfTag 
-element elasticBeamColumn 104 242 152 0.290000 38236762 0.022000 $BeamTransfTag 
+element elasticBeamColumn 101 112 122 0.290000 40305087 0.022000 $BeamTransfTag 
+element elasticBeamColumn 102 222 132 0.290000 40305087 0.022000 $BeamTransfTag 
+element elasticBeamColumn 103 232 142 0.290000 40305087 0.022000 $BeamTransfTag 
+element elasticBeamColumn 104 242 152 0.290000 40305087 0.022000 $BeamTransfTag 
 
 # define GRAVITY 
 pattern Plain 1 Linear {
-   load  12   0.0  -197.1 0.0
-   load  22   0.0  -394.3 0.0
-   load  32   0.0  -394.3 0.0
-   load  42   0.0  -394.3 0.0
-   load  52   0.0  -197.1 0.0
+   load  12   0.0  -194.6 0.0
+   load  22   0.0  -389.1 0.0
+   load  32   0.0  -389.1 0.0
+   load  42   0.0  -389.1 0.0
+   load  52   0.0  -194.6 0.0
 }
 set pi [expr 2.0*asin(1.0)];
-set lambda [eigen  4];
-set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)] [expr 2.0*$pi/pow([lindex $lambda 2],0.5)] [expr 2.0*$pi/pow([lindex $lambda 3],0.5)]]
+set lambda [eigen  2];
+set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)]]
      set outfile [open "period.txt" w]
      puts $outfile $T 
 puts "T = $T s"

@@ -8,10 +8,10 @@ clc
 close all
 
 %% Definition of the models
-portfolio = [2 100 4];                                                     %the 1st value is the typology; the 2nd the number of buildings we want to produce, the 3rd the seismic coefficient
-preCode = 1;                                                               %1 is precode and 2 is PostCode
+portfolio = [2 100 4;2 100 6;2 100 9; 2 100 12];                                                     %the 1st value is the typology; the 2nd the number of buildings we want to produce, the 3rd the seismic coefficient
+preCode = [1 2 2 2];                                                               %1 is precode and 2 is PostCode
 cnn = 1;                                                                   %1 stands for corbel connection, 2 for "fork" connection
-c = 0.2;
+c = [0.2 0.3];
 noTypologies = size(portfolio,1);
 noLSs = 3; %number of limit states
 constant = 0; % if vertical acceleration is an input constant = 0 else = 1;
@@ -24,10 +24,10 @@ addpath('../common/');
 
 %% Analyses
 for typology = 1:noTypologies
-    pdm = variables(lastNGA, noLSs);
+    pdm = variables(lastNGA, noLSs,c);
     noAsset = 1;
     while noAsset <= portfolio(typology,2)
-        asset = sampleGeometry2D(portfolio(typology,1),preCode,portfolio(typology,3),c);
+        asset = sampleGeometry(portfolio(typology,1),preCode(typology),portfolio(typology,3),c);
         asset.fv = fv; 
         action = computeActions(asset);
         asset = designAsset(asset,action);
@@ -35,10 +35,10 @@ for typology = 1:noTypologies
         performPO(asset);
  		connection = ConnectionLimitState(asset ,action);
  		definelimitstates;
-        PlotPushover;
+        %PlotPushover;
         counter = 1;
  		for j = 1:3:lastNGA
- 			[noAsset j]
+ 			[portfolio(typology,3) noAsset j]
  			[maxSteps] = parseAccelerogram3D(j,NGA,1);
  			dt = 0.01;
  			units = 'g';
@@ -72,7 +72,9 @@ for typology = 1:noTypologies
         end
  		noAsset = noAsset+1;
     end
-    dlmwrite(strcat('pdm',num2str(typology),'.tcl'),pdm.TOT,'delimiter','	');
-    dlmwrite(strcat('pdmOC',num2str(typology),'.tcl'),pdm.OC,'delimiter','	');
-    dlmwrite(strcat('pdmWO',num2str(typology),'.tcl'),pdm.WO,'delimiter','	');
+    for fr = 1:length(c)
+        dlmwrite(strcat('pdm',num2str(portfolio(typology,1)),'_',num2str(portfolio(typology,3)),'_',num2str(c(fr)),'.tcl'),pdm.TOT{fr},'delimiter','	');
+        dlmwrite(strcat('pdmOC',num2str(portfolio(typology,1)),'_',num2str(portfolio(typology,3)),'_',num2str(c(fr)),'.tcl'),pdm.OC{fr},'delimiter','	');
+        dlmwrite(strcat('pdmWO',num2str(portfolio(typology,1)),'_',num2str(portfolio(typology,3)),'_',num2str(c(fr)),'.tcl'),pdm.WO{fr},'delimiter','	');
+    end
 end

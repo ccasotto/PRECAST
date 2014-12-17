@@ -51,7 +51,7 @@ recorder Element -file tmp/ConcreteStressStrainY.txt -eleRange $ColumnFirst $Col
 }
 
 # Definizione di alcune delle variabili utilizzate durante analisi 
- set nSteps 1.838005e+02;
+ set nSteps 2.551890e+02;
 set dirSpost 1;
 set Tol 1.0e-5;
 # Definizione delle opzioni di analisi 

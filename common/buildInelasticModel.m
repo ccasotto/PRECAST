@@ -146,8 +146,8 @@ a = pwd;
     fprintf(file,'}\n');
 	
 	fprintf(file,'set pi [expr 2.0*asin(1.0)];\n');   
-    fprintf(file,'set lambda [eigen  4];\n');
-    fprintf(file,'set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)] [expr 2.0*$pi/pow([lindex $lambda 2],0.5)] [expr 2.0*$pi/pow([lindex $lambda 3],0.5)]]\n');  
+    fprintf(file,'set lambda [eigen  2];\n');
+    fprintf(file,'set T [list [expr 2.0*$pi/pow([lindex $lambda 0],0.5)] [expr 2.0*$pi/pow([lindex $lambda 1],0.5)]]\n');  
     fprintf(file,'     set outfile [open "period.txt" w]\n');
     fprintf(file,'     puts $outfile $T \n');
     fprintf(file,'puts "T = $T s"\n');

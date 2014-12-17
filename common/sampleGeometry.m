@@ -23,7 +23,7 @@ function asset = sampleGeometry(type,preCode,s,friction)
  else
 	asset.type = 2;
     asset.noStoreys = 1;
- 	asset.noBays = 4;
+    asset.noBays = 4;
 	asset.noBayZ = 3;
     asset.ColH_ground = sampleTruncNrml(6.5,1.3,4,11,1,1); 
     asset.BeamLengths = sampleTruncNrml(8.7,2,8,10,1,1); 

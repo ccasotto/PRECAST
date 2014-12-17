@@ -2,24 +2,30 @@ clc
 clear all
 close all
 a = pwd;
-noLSs=3;
-type = 1;
-code = 1;
-s = [4 6 9 12];
-c=02;
-correlation = 0;
+
+% Initial options
+noLSs=3; %n. of limit states
+type = 1; %typology
+code = 1; %precode-lowcode
+s = [4]; %seismic design lateral load
+c=02; %friction coefficient
+correlation = 1;
+threed = 1;
+plotflag = 0;
+
 addpath('../common/');
-IMLsX=dlmread('IMLsX.tcl');
-IMLs = IMLsX;
-T = 0.1:0.1:4;
+IMLsX = dlmread('IMLsX.tcl');
+IMLsY = dlmread('IMLsY.tcl');
+if threed; IMLs = (IMLsX.*IMLsY).^0.5; frame = '3D'; else IMLs = IMLsX; frame = '2D'; end
+T = 0.5:0.1:4;
 Ts = [];
 
 for i=1:length(s)
     
-    pdm = dlmread(horzcat('./../Results/pdm',num2str(type),'_',num2str(s(i)),'.tcl'));
+    pdm = dlmread(horzcat('./../Results/',frame,'/pdm',num2str(type),'_',num2str(s(i)),'_0.',num2str(c),'.tcl'));
     
     if correlation
-        [ LS1, LS2, LSmean, T1, T2, Tm, fit ] = Correlation( pdm, IMLs,T);
+        [ LS1, LS2, LSmean, T1, T2, Tm, m_s_r ] = Correlation( pdm, IMLs,T);
         Ts(i) = T(Tm);
         pdm(:,4)=IMLs(:,Tm);
         [DPM] = DamageProbabilityMatrix (pdm, noLSs);
@@ -29,8 +35,12 @@ for i=1:length(s)
         pdm(:,4)=IMLs(:,Tm);
         [DPM] = DamageProbabilityMatrix (pdm, noLSs);
         cumDamageStates = fragility(DPM, noLSs);
+        for j=1:2
+            [m_s_r(j,1), m_s_r(j,2)] = fn_mle_pc_probit(DPM(:,noLSs+1), 100, cumDamageStates(:,j+1)*100);
+            m_s_r(j,3) = corr(cumDamageStates(:,j+1),logncdf(DPM(:,noLSs+1),log(m_s_r(j,1)),(m_s_r(j,2)))).^2;
+        end
     end
-    
+    MLE = m_s_r;
     iml=1:DPM(length(DPM),4)/length(DPM):DPM(length(DPM),4);
 
     %% Plots
@@ -61,8 +71,8 @@ for i=1:length(s)
     hold on
     plot1 = plot(DPM(:,4),cumDamageStates(:,2),'LineStyle','none');
     plot2 = plot(DPM(:,4),cumDamageStates(:,3),'LineStyle','none');
-    plot3 = plot(iml,logncdf(iml,fit.MLE(1,1),fit.MLE(1,2)));
-    plot4 = plot(iml,logncdf(iml,fit.MLE(2,1),fit.MLE(2,2)));
+    plot3 = plot(iml,logncdf(iml,log(m_s_r(1,1)),m_s_r(1,2)));
+    plot4 = plot(iml,logncdf(iml,log(m_s_r(2,1)),m_s_r(2,2)));
     set(plot1,'Marker','*','Color',[0 0 1],'DisplayName','LS1');
     set(plot2,'Marker','+','Color',[1 0 0],'DisplayName','LS2');
     set(plot3,'LineWidth',2,'Color',[0 0 1],'LineStyle','-','DisplayName','yielding');
@@ -84,22 +94,17 @@ for i=1:length(s)
 
     figure %Comparison
     hold on
-    plot1 = plot(iml,logncdf(iml,fit.MLE(2,1),fit.MLE(2,2)));
+    plot1 = plot(iml,logncdf(iml,log(MLE(2,1)),MLE(2,2)));
     plot2 = plot(DPM(:,4),cumDamageStates(:,3),'LineStyle','none');
-    pdm = dlmread(horzcat('./../Results/pdmWO',num2str(type),'_',num2str(s(i)),'.tcl'));
+    pdm = dlmread(horzcat('./../Results/',frame,'/pdm',num2str(type),'_',num2str(s(i)),'_0.3.tcl'));
     pdm(:,4)=IMLs(:,Tm);
     [DPM] = DamageProbabilityMatrix (pdm, noLSs);
     cumDamageStates = fragility(DPM, noLSs);
-        for j=1:2
-            [mle(j,1), mle(j,2), mle(j,4)] = fn_mle_pc_probit(DPM(:,noLSs+1), 100, cumDamageStates(:,j+1)*100);
-            mle(j,3) = corr(cumDamageStates(:,j+1),logncdf(DPM(:,noLSs+1),log(mle(j,1)),(mle(j,2)))).^2;
-        end
-    fit.MLE = mle;
-    fit.MLE(:,1) = log(fit.MLE(:,1));
-    fit.MLE(:,4) = fit.MLE(:,4)/100;
-    fit.MLE(2,3)
-    y = logncdf(iml,fit.MLE(2,1),fit.MLE(2,2));
-    plot5 = plot(iml,y);
+    for j=1:2
+        [m_s_r(j,1), m_s_r(j,2)] = fn_mle_pc_probit(DPM(:,noLSs+1), 100, cumDamageStates(:,j+1)*100);
+        m_s_r(j,3) = corr(cumDamageStates(:,j+1),logncdf(DPM(:,noLSs+1),log(m_s_r(j,1)),(m_s_r(j,2)))).^2;
+    end
+    plot5 = plot(iml,logncdf(iml,log(m_s_r(2,1)),m_s_r(2,2)));
     plot4 = plot(DPM(:,4),cumDamageStates(:,3),'LineStyle','none');
     set(plot1,'LineWidth',2,'Color',[0 0 0],'LineStyle','-','DisplayName','w sliding');
     set(plot2,'Marker','+','Color',[0 0 0],'DisplayName','Data 0.2');
@@ -123,4 +128,4 @@ for i=1:length(s)
     
     
 end
-dlmwrite(horzcat('stats',num2str(type),'_',num2str(code),'_',num2str(s),'.tcl'),fit.MLE,'delimiter','	');
+dlmwrite(horzcat('stats',num2str(type),'_',num2str(code),'_',num2str(s),'.tcl'),MLE,'delimiter','	');
